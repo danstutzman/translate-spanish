@@ -24,10 +24,11 @@ sql = "select part_of_speech, word_lowercase
   from line_words
   left join translations on translations.part_of_speech_and_spanish_word =
     (line_words.part_of_speech || '-' || line_words.word_lowercase)
-  where part_of_speech like 'CC'
+  where part_of_speech like 'NCMP000'
   and translations.part_of_speech_and_spanish_word is null
   group by part_of_speech, word_lowercase
-  having count(*) > 100"
+  having count(*) > 10
+  limit 100"
 translation_inputs = ActiveRecord::Base.connection.execute(sql).map { |row|
   [row['part_of_speech'], row['word_lowercase']]
 }
@@ -45,9 +46,13 @@ http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
 request = Net::HTTP::Get.new(uri.path + '?' + uri.query)
 response = http.request(request)
-english_words = JSON.parse(response.body)['data']['translations'].map { |line| line['translatedText'] }
-translation_inputs.zip(english_words).each do |translation_input, english_word|
-  puts "#{translation_input[0]}-#{translation_input[1]} => #{english_word}"
-  Translation.create! part_of_speech_and_spanish_word: translation_input.join('-'),
-    english_word: english_word, automated: true
+if response.code != '200'
+  puts response.body
+else
+  english_words = JSON.parse(response.body)['data']['translations'].map { |line| line['translatedText'] }
+  translation_inputs.zip(english_words).each do |translation_input, english_word|
+    puts "#{translation_input[0]}-#{translation_input[1]} => #{english_word}"
+    Translation.create! part_of_speech_and_spanish_word: translation_input.join('-'),
+      english_word: english_word, automated: true
+  end
 end
