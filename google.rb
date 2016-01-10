@@ -10,7 +10,6 @@ class LineWord < ActiveRecord::Base
 end
 
 class Translation < ActiveRecord::Base
-  self.primary_key = 'translation_id'
 end
 
 ActiveRecord::Base.establish_connection({
@@ -21,18 +20,34 @@ ActiveRecord::Base.establish_connection({
   encoding: 'unicode',
 })
 
-#curl "https://www.googleapis.com/language/translate/v2?key=$KEY&q=hello%20world&source=en&target=es"
+sql = "select part_of_speech, word_lowercase
+  from line_words
+  left join translations on translations.part_of_speech_and_spanish_word =
+    (line_words.part_of_speech || '-' || line_words.word_lowercase)
+  where part_of_speech like 'CC'
+  and translations.part_of_speech_and_spanish_word is null
+  group by part_of_speech, word_lowercase
+  having count(*) > 100"
+translation_inputs = ActiveRecord::Base.connection.execute(sql).map { |row|
+  [row['part_of_speech'], row['word_lowercase']]
+}
+raise "Nothing to translate" if translation_inputs == []
 
 uri = URI.parse('https://www.googleapis.com/language/translate/v2')
-uri.query = URI.encode_www_form([
-  ['key',    API_KEY],
-  ['source', 'en'],
-  ['target', 'es'],
-  ['q',      'hello'],
-  ['q',      'world'],
-])
-http = Net::HTTP.new(uri.host, uri.port) 
+params = [['key', API_KEY], ['source', 'es'], ['target', 'en']]
+translation_inputs.each do |translation_input|
+  part_of_speech, spanish_word = translation_input
+  params.push ['q', spanish_word]
+end
+uri.query = URI.encode_www_form(params)
+
+http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
 request = Net::HTTP::Get.new(uri.path + '?' + uri.query)
 response = http.request(request)
-p JSON.parse(response.body)['data']['translations'].map { |line| line['translatedText'] }
+english_words = JSON.parse(response.body)['data']['translations'].map { |line| line['translatedText'] }
+translation_inputs.zip(english_words).each do |translation_input, english_word|
+  puts "#{translation_input[0]}-#{translation_input[1]} => #{english_word}"
+  Translation.create! part_of_speech_and_spanish_word: translation_input.join('-'),
+    english_word: english_word, automated: true
+end
