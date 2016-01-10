@@ -27,7 +27,7 @@ sql = "select part_of_speech, word_lowercase
   where part_of_speech like 'NCMP000'
   and translations.part_of_speech_and_spanish_word is null
   group by part_of_speech, word_lowercase
-  having count(*) > 10
+  order by count(*) desc
   limit 100"
 translation_inputs = ActiveRecord::Base.connection.execute(sql).map { |row|
   [row['part_of_speech'], row['word_lowercase']]
