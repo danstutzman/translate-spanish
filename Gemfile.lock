@@ -36,6 +36,9 @@ GEM
     tilt (2.0.2)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
+    verbs (2.1.4)
+      activesupport (>= 2.3.4)
+      i18n
 
 PLATFORMS
   ruby
@@ -45,6 +48,7 @@ DEPENDENCIES
   activerecord-postgresql-adapter
   pg
   sinatra-activerecord
+  verbs (~> 2.1.4)
 
 BUNDLED WITH
    1.11.2
