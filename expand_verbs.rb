@@ -88,6 +88,10 @@ or part_of_speech like 'VMIS2S0'
 or part_of_speech like 'VMIS2P0'
 or part_of_speech like 'VMIS3S0'
 or part_of_speech like 'VMIS3P0'
+or part_of_speech like 'VMSP1P0'
+or part_of_speech like 'VMSP2S0'
+or part_of_speech like 'VMSP3S0'
+or part_of_speech like 'VMSP3P0'
 "
 ActiveRecord::Base.connection.execute(sql).each do |row|
   part_of_speech, word_lowercase, lemma =
@@ -132,6 +136,16 @@ ActiveRecord::Base.connection.execute(sql).each do |row|
         when 'VMIS3P0'
           english = 'they ' + Verbs::Conjugator.conjugate(english_words[0].intern,
             tense: :past, aspect: :perfective)
+        when 'VMSP1S0'
+          english = 'I would ' + english_words[0]
+        when 'VMSP1P0'
+          english = 'we would ' + english_words[0]
+        when 'VMSP2S0'
+          english = 'you would ' + english_words[0]
+        when 'VMSP3S0'
+          english = 'would ' + english_words[0]
+        when 'VMSP3P0'
+          english = 'they would ' + english_words[0]
         else
           raise "Don't know how to handle part of speech #{part_of_speech}"
       end
