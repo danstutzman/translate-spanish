@@ -49,6 +49,29 @@ def spanish_suffix_to_english_suffix spanish_suffix
   end
 end
 
+def possible_spanish_suffix_to_english_suffix spanish_word
+  english_suffix = case spanish_word
+    when /me$/   then ' me'
+    when /te$/   then ' you'
+    when /se$/   then ' itself'
+    when /nos$/  then ' us'
+    when /le$/   then ' him'
+    when /lo$/   then ' him'
+    when /la$/   then ' her'
+    when /los$/  then ' them'
+    when /las$/  then ' them'
+    when /les$/  then ' them'
+    when /os$/   then ' you'
+    when /mela$/ then ' me it'
+    when /melo$/ then ' me it'
+    when /tela$/ then ' you it'
+    when /telo$/ then ' you it'
+    when /sela$/ then ' itself it'
+    when /selo$/ then ' itself it'
+    else ''
+  end
+end
+
 if false
 sql = "select part_of_speech, word_lowercase, lemma
 from line_words
@@ -88,6 +111,8 @@ or part_of_speech like 'VMIS2S0'
 or part_of_speech like 'VMIS2P0'
 or part_of_speech like 'VMIS3S0'
 or part_of_speech like 'VMIS3P0'
+or part_of_speech like 'VMIF%'
+or part_of_speech like 'VMM%'
 or part_of_speech like 'VMSP1P0'
 or part_of_speech like 'VMSP2S0'
 or part_of_speech like 'VMSP3S0'
@@ -121,6 +146,16 @@ ActiveRecord::Base.connection.execute(sql).each do |row|
           english = 'they ' + english_words[0]
         when 'VMIP3S0'
           english = 'they ' + Verbs::Conjugator.conjugate(english_words[0].intern)
+        when 'VMIF1S0'
+          english = "I'll " + english_words[0]
+        when 'VMIF1P0'
+          english = "we'll " + english_words[0]
+        when 'VMIF2S0'
+          english = "you'll " + english_words[0]
+        when 'VMIF3S0'
+          english = "will " + english_words[0]
+        when 'VMIF3P0'
+          english = "they'll " + english_words[0]
         when 'VMIS1S0'
           english = 'I ' + Verbs::Conjugator.conjugate(english_words[0].intern,
             tense: :past, aspect: :perfective, person: :first)
@@ -136,6 +171,11 @@ ActiveRecord::Base.connection.execute(sql).each do |row|
         when 'VMIS3P0'
           english = 'they ' + Verbs::Conjugator.conjugate(english_words[0].intern,
             tense: :past, aspect: :perfective)
+        when 'VMM01P0'
+          english = 'we ' + english_words[0]
+        when /^VMM.*/
+          english = english_words[0] + \
+            possible_spanish_suffix_to_english_suffix(word_lowercase)
         when 'VMSP1S0'
           english = 'I would ' + english_words[0]
         when 'VMSP1P0'
