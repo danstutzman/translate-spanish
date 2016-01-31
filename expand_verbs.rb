@@ -113,6 +113,7 @@ or part_of_speech like 'VMIS3S0'
 or part_of_speech like 'VMIS3P0'
 or part_of_speech like 'VMIF%'
 or part_of_speech like 'VMM%'
+or part_of_speech like 'VMP%'
 or part_of_speech like 'VMSP1P0'
 or part_of_speech like 'VMSP2S0'
 or part_of_speech like 'VMSP3S0'
@@ -176,6 +177,9 @@ ActiveRecord::Base.connection.execute(sql).each do |row|
         when /^VMM.*/
           english = english_words[0] + \
             possible_spanish_suffix_to_english_suffix(word_lowercase)
+        when /VMP00[SP][FM]/
+          english = Verbs::Conjugator.conjugate(english_words[0].intern,
+            tense: :past, aspect: :perfect).split(' ').last
         when 'VMSP1S0'
           english = 'I would ' + english_words[0]
         when 'VMSP1P0'
